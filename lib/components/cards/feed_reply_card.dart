@@ -132,7 +132,8 @@ class FeedReplyCard extends StatelessWidget {
                         _bottomInfo(context),
                         if (!isReply2Reply &&
                             (!data.replyRows.isNullOrEmpty ||
-                                (data.replyRowsMore ?? 0) != 0)) ...[
+                                (data.replyRowsMore ?? 0) != 0 ||
+                                _replyCount(data) > 0)) ...[
                           const SizedBox(height: 10),
                           _replyRows(context),
                         ],
@@ -240,6 +241,10 @@ class FeedReplyCard extends StatelessWidget {
   }
 
   Widget _replyRows(BuildContext context) {
+    final int replyCount = _replyCount(data);
+    // 无内联回复但仍有回复数时，也要给出入口，否则只能看到数量却无法查看
+    final bool showMore = (data.replyRowsMore ?? 0) > 0 ||
+        (data.replyRows.isNullOrEmpty && replyCount > 0);
     return Material(
       clipBehavior: Clip.hardEdge,
       color: Theme.of(context).colorScheme.onInverseSurface,
@@ -248,8 +253,8 @@ class FeedReplyCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ...data.replyRows!.map((item) => _replyRowsItem(context, item)),
-          if (data.replyRowsMore != null && data.replyRowsMore! > 0)
+          ...?data.replyRows?.map((item) => _replyRowsItem(context, item)),
+          if (showMore)
             InkWell(
               onTap: () {
                 showCupertinoModalBottomSheet(
@@ -267,7 +272,7 @@ class FeedReplyCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Text(
-                  '查看更多回复(${data.replynum})',
+                  '查看更多回复(${data.replynum ?? data.replyRowsMore})',
                   style: TextStyle(
                     fontSize: 14,
                     color: Theme.of(context).colorScheme.primary,
@@ -388,6 +393,13 @@ class FeedReplyCard extends StatelessWidget {
 }
 
 enum PanelAction { copy, block, delete, report, showReply }
+
+/// 解析楼层的回复数（replynum 可能是 int / String / null）
+int _replyCount(Datum data) {
+  final dynamic value = data.replynum;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
 
 class _MorePanel extends StatelessWidget {
   const _MorePanel({
