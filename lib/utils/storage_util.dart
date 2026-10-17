@@ -134,6 +134,9 @@ class GStorage {
       await regenerateParams();
     }
 
+    // 老安装的版本参数停留在旧值，需要随协议升级同步，否则接口仍会被服务端拦截
+    _migrateProtocol();
+
     GlobalData().isLogin = isLogin;
     GlobalData().uid = uid;
     GlobalData().username = username;
@@ -180,6 +183,19 @@ class GStorage {
     setAndroidVersion(await DeviceUtil.realAndroidVersion());
     fullSetUserAgent();
     await fullSetXAppDevice();
+  }
+
+  /// 把老安装的版本参数迁移到当前协议值，并刷新 UA 使其与版本头自洽。
+  /// 设备指纹保持不变，避免被服务端当成新设备触发人机验证。
+  static void _migrateProtocol() {
+    final int storedProtocol =
+        settings.get(SettingsBoxKey.protocolVersion, defaultValue: 0);
+    if (storedProtocol >= Constants.PROTOCOL_VERSION) return;
+    setVersionName(Constants.VERSION_NAME);
+    setApiVersion(Constants.API_VERSION);
+    setVersionCode(Constants.VERSION_CODE);
+    fullSetUserAgent();
+    settings.put(SettingsBoxKey.protocolVersion, Constants.PROTOCOL_VERSION);
   }
 
   /// 生成随机参数（保留旧行为，供"生成随机参数"按钮使用）
@@ -487,6 +503,7 @@ class SettingsBoxKey {
       checkUpdate = 'checkUpdate',
       checkCount = 'checkCount',
       installTime = 'installTime',
+      protocolVersion = 'protocolVersion',
       versionName = 'versionNamev',
       apiVersion = 'apiVersion',
       versionCode = 'versionCode',

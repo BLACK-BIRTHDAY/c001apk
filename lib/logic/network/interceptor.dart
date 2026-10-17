@@ -8,7 +8,6 @@ import '../../utils/storage_util.dart';
 import '../../utils/token_util.dart';
 
 class ApiInterceptor extends Interceptor {
-  String? _token;
   String? _xAppDevice;
   String? _userAgent;
   String? _sdkInt;
@@ -40,8 +39,11 @@ class ApiInterceptor extends Interceptor {
     return _userAgent ??= GStorage.userAgent;
   }
 
+  // 签名与当前 X-App-Code 绑定，故每次请求实时生成，避免版本号变更后缓存失配
   String get token {
-    return _token ??= TokenUtils.getTokenV2(xAppDevice);
+    final int code =
+        int.tryParse(versionCode) ?? int.parse(Constants.VERSION_CODE);
+    return TokenUtils.getTokenV3(xAppDevice, appCode: code);
   }
 
   @override

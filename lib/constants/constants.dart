@@ -13,9 +13,11 @@ class Constants {
   static const MODE = 'universal';
   static const APP_LABEL =
       'token://com.coolapk.market/dcf01e569c1e3db93a3d0fcf191a622c';
-  static const VERSION_NAME = '13.4.1';
-  static const API_VERSION = '13';
-  static const VERSION_CODE = '2312121';
+  static const VERSION_NAME = '16.2.0';
+  static const API_VERSION = '16';
+  static const VERSION_CODE = '2604201';
+  /// 客户端协议版本，变更版本号 / 签名算法时递增，用于老安装自动迁移参数。
+  static const PROTOCOL_VERSION = 2;
 
   static const PREFIX_COOLMARKET = 'coolmarket://';
   static const PREFIX_HTTP = 'http';
