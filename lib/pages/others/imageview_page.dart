@@ -6,8 +6,9 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
-import '../../constants/constants.dart';
+import '../../components/live_photo_player.dart';
 import '../../utils/download_util.dart';
+import '../../utils/live_photo_util.dart';
 import '../../utils/utils.dart';
 
 class ImageViewPage extends StatefulWidget {
@@ -26,6 +27,10 @@ class _ImageViewPageState extends State<ImageViewPage> {
   final _currentPageStream = StreamController<int>();
   late List<String> _imgList;
   String? _heroTag;
+
+  // 实况图播放覆盖层：非空时在查看器之上叠加内嵌视频播放器。
+  // 用独立字段记录播放源，避免播放期间翻页导致源错位。
+  String? _liveSourceUrl;
   late final _pageController = PageController(initialPage: _initialPage);
 
   // 已缓存大图的索引集合：用于切换缩略图→大图显示
@@ -240,15 +245,14 @@ class _ImageViewPageState extends State<ImageViewPage> {
                 onPageChanged: (index) {
                   setState(() {
                     _initialPage = index;
-                    _heroTag =
-                        '${_imgList[index]}${Constants.SUFFIX_THUMBNAIL}';
+                    _heroTag = LivePhotoUtil.thumbnailUrl(_imgList[index]);
                   });
                   _currentPageStream.add(index);
                   _precacheLarge(index);
                 },
                 itemBuilder: (context, index) {
                     final thumbUrl =
-                        '${_imgList[index]}${Constants.SUFFIX_THUMBNAIL}';
+                        LivePhotoUtil.thumbnailUrl(_imgList[index]);
                     final activeTag = index == _initialPage
                         ? (_heroTag ?? thumbUrl)
                         : null;
@@ -258,8 +262,11 @@ class _ImageViewPageState extends State<ImageViewPage> {
                     // LongPressGestureRecognizer 需要手指保持不动 500ms 才触发，
                     // 不会与 PhotoView 的 ScaleGestureRecognizer 竞争（缩放需要手指移动）。
                     // 不设置 onTap/onVerticalDragEnd，避免对应 recognizer 干扰缩放。
-                    return GestureDetector(
-                      onLongPress: () {
+                    final isLive = LivePhotoUtil.isLivePhoto(_imgList[index]);
+                    return Stack(
+                      children: [
+                        GestureDetector(
+                          onLongPress: () {
                         showDialog(
                           context: context,
                           builder: (context) {
@@ -362,7 +369,15 @@ class _ImageViewPageState extends State<ImageViewPage> {
                           ),
                         );
                       },
-                    ),
+                        ),
+                        ),
+                        if (isLive)
+                          Positioned(
+                            left: 16,
+                            bottom: 24,
+                            child: _livePlayButton(_imgList[index]),
+                          ),
+                      ],
                     );
                   },
                 ),
@@ -435,10 +450,53 @@ class _ImageViewPageState extends State<ImageViewPage> {
                   ),
                 ),
               ),
+              // 实况图播放覆盖层：置于最上层，覆盖 PageView 与页码。
+              // 静态封面仍由下方 PhotoView 承载，解析失败时自动兜底显示。
+              if (_liveSourceUrl != null)
+                Positioned.fill(
+                  child: LivePhotoPlayer(
+                    sourceUrl: _liveSourceUrl!,
+                    coverUrl: _liveSourceUrl!,
+                    onClose: () => setState(() => _liveSourceUrl = null),
+                  ),
+                ),
             ],
           ),
         ),
       ),
+      ),
+    );
+  }
+
+  /// 实况图播放入口：点击后在当前查看器之上打开内嵌视频播放器。
+  Widget _livePlayButton(String url) {
+    return GestureDetector(
+      onTap: () => setState(() => _liveSourceUrl = url),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.play_circle_fill,
+              color: Colors.white,
+              size: 16,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '实况',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 12,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

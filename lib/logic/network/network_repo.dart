@@ -48,6 +48,19 @@ class NetworkRepo {
     );
   }
 
+  /// 实况图视频解析：接口以 302 返回视频地址，需自行读取 Location 头。
+  static Future<Response> getLivePhotoVideoUrl(String picUrl) async {
+    return Request().get(
+      Api.livePhotoShowVideo,
+      queryParameters: {'picUrl': picUrl},
+      options: Options(
+        followRedirects: false,
+        validateStatus: (_) => true,
+        responseType: ResponseType.plain,
+      ),
+    );
+  }
+
   static Future<Response> deleteMsg(
     String url, {
     dynamic ukey,

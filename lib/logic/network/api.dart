@@ -55,4 +55,8 @@ class Api {
 
   static String postRequestValidate =
       '${Constants.URL_API_SERVICE}/v6/account/requestValidate';
+
+  /// 实况图视频解析：按封面地址返回 302，Location 即视频地址。
+  static String livePhotoShowVideo =
+      '${Constants.URL_API_SERVICE}/v6/livePhoto/showVideo';
 }

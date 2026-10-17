@@ -8,6 +8,7 @@ import '../components/nine_grid_view.dart';
 import '../constants/constants.dart';
 import '../pages/others/imageview_page.dart';
 import '../utils/imageview_route.dart';
+import '../utils/live_photo_util.dart';
 import '../utils/utils.dart';
 
 Widget image(
@@ -52,11 +53,11 @@ Widget image(
             initialPage: isFeedArticle
                 ? picArr.indexOf(articleImg!)
                 : picArr.indexOf(picArr[index]),
-            heroTag: '$imgUrl${Constants.SUFFIX_THUMBNAIL}',
+            heroTag: LivePhotoUtil.thumbnailUrl(imgUrl),
           );
         },
         child: Hero(
-          tag: '$imgUrl${Constants.SUFFIX_THUMBNAIL}',
+          tag: LivePhotoUtil.thumbnailUrl(imgUrl),
           // 自定义 Hero 飞行：滑动退出时按方向做抛物线偏移，点击退出走直线
           flightShuttleBuilder:
               (context, animation, direction, fromContext, toContext) {
@@ -97,17 +98,18 @@ Widget image(
                 alignment: Alignment.bottomRight,
                 children: [
                   networkImage(
-                    '$imgUrl${Constants.SUFFIX_THUMBNAIL}',
+                    LivePhotoUtil.thumbnailUrl(imgUrl),
                     width: imageWidth,
                     height: imageHeight,
                     fit: isFeedArticle || picArr.length == 1
                         ? BoxFit.fill
                         : BoxFit.cover,
                   ),
-                  if (imgUrl.endsWith(Constants.SUFFIX_GIF))
-                    _badge(context, 'GIF'),
-                  if (!imgUrl.endsWith(Constants.SUFFIX_GIF) &&
-                      _isLongImage(imgUrl))
+                  if (LivePhotoUtil.isLivePhoto(imgUrl))
+                    _badge(context, '实况')
+                  else if (imgUrl.endsWith(Constants.SUFFIX_GIF))
+                    _badge(context, 'GIF')
+                  else if (_isLongImage(imgUrl))
                     _badge(context, '长图'),
                 ],
               ),

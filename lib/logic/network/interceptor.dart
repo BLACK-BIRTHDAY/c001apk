@@ -131,7 +131,8 @@ class ApiInterceptor extends Interceptor {
   void onError(err, handler) async {
     String url = err.requestOptions.uri.toString();
     if (!url.contains('/v6/apk/download') &&
-        !url.contains('/v6/message/showImage')) {
+        !url.contains('/v6/message/showImage') &&
+        !url.contains('/v6/livePhoto/showVideo')) {
       SmartDialog.showToast(
         await dioError(err),
         displayType: SmartToastType.onlyRefresh,
